@@ -1,0 +1,22 @@
+language: c
+
+matrix:
+  include:
+    - os: linux
+      compiler: avr-gcc
+      sudo: false
+
+    - os: linux
+      dist: trusty
+      sudo: required
+      compiler: avr-gcc
+
+addons:
+  apt:
+    packages:
+      - gcc-avr
+      - avr-libc
+
+script:
+  - mkdir travis && cd travis
+  - cmake .. -DCMAKE_TOOLCHAIN_FILE=../externals/CMake-avr/generic-gcc-avr.cmake && make
