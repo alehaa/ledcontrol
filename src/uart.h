@@ -18,25 +18,18 @@
  *  2016 Alexander Haase <ahaase@alexhaase.de>
  */
 
-#include "uart.h"
-
-#include <stdbool.h>
-#include <stdio.h>
+#ifndef LEDCONTROL_UART_H
+#define LEDCONTROL_UART_H
 
 
-int
-main(int argc, char **argv)
-{
-	uart_init();
-	uart_init_stdio();
+#include <stdio.h> // FILE
 
-	while (true) {
-		char c = getc(stdin);
-		switch (c) {
-			case 'a': fprintf(stdout, "Hello world!\n"); break;
 
-			default: fprintf(stdout, "Default: 0x%x\n", c);
-		}
-	}
-	return 0;
-}
+void uart_init();
+void uart_init_stdio();
+
+int uart_putchar(char c, FILE *stream);
+int uart_getchar(FILE *stream);
+
+
+#endif

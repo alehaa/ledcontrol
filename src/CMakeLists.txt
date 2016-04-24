@@ -24,4 +24,5 @@ add_definitions("-DF_CPU=${MCU_SPEED}")
 
 
 add_avr_executable(ledcontrol
+	uart.c
 	main.c)
