@@ -18,36 +18,24 @@
  *  2016 Alexander Haase <ahaase@alexhaase.de>
  */
 
-#include <stdbool.h>
-#include <stdio.h>
-
-#include <util/delay.h>
-
-#include "led.h"
-#include "uart.h"
+#ifndef LEDCONTROL_LED_H
+#define LEDCONTROL_LED_H
 
 
-int
-main(int argc, char **argv)
+#include <stddef.h>
+#include <stdint.h>
+
+
+typedef struct rgb
 {
-	uart_init();
-	uart_init_stdio();
-	ledcontrol_led_init();
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+} rgb;
 
-	rgb color;
-	while (true) {
-		if (fscanf(stdin, "%2x%2x%2x", &color.r, &color.g, &color.b) == 3) {
-			size_t n;
-			for (n = 0; n < 94; n++)
-				ledcontrol_led_write(&color, 1);
-			_delay_us(50);
-		} else {
-			fprintf(stderr, "Invalid input\n");
-			// flush input
-			while (getchar() != '\n')
-				;
-		}
-	}
 
-	return 0;
-}
+void ledcontrol_led_init();
+void ledcontrol_led_write(rgb *color, int n);
+
+
+#endif

@@ -22,7 +22,6 @@
  * http://www.appelsiini.net/2011/simple-usart-with-avr-libc
  */
 
-
 #include "uart.h"
 
 #include <stdio.h>
@@ -47,10 +46,10 @@ uart_init()
 	UBRR0L = (unsigned char)(UBRR);
 
 	// enable receiver and transmitter
-	UCSR0B = (1 << RXEN0) | (1 << TXEN0);
+	UCSR0B = _BV(RXEN0) | _BV(TXEN0);
 
 	// set frame format: 8n1
-	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
+	UCSR0C = _BV(UCSZ01) | _BV(UCSZ00);
 }
 
 
@@ -90,7 +89,7 @@ uart_init_stdio()
 int
 uart_putchar(char c, FILE *stream)
 {
-	while (!(UCSR0A & (1 << UDRE0)))
+	while (!(UCSR0A & _BV(UDRE0)))
 		;
 	UDR0 = c;
 
@@ -108,7 +107,7 @@ uart_putchar(char c, FILE *stream)
 int
 uart_getchar(FILE *stream)
 {
-	while (!(UCSR0A & (1 << RXC0)))
+	while (!(UCSR0A & _BV(RXC0)))
 		;
 
 	return (int)UDR0;
