@@ -29,7 +29,7 @@
 #include <avr/io.h>
 
 
-#define BAUD 57600
+#define BAUD 9600
 #define UBRR F_CPU / 16 / BAUD - 1
 
 

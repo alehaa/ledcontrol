@@ -36,17 +36,18 @@ main(int argc, char **argv)
 
 	rgb color;
 	while (true) {
-		if (fscanf(stdin, "%2x%2x%2x", &color.r, &color.g, &color.b) == 3) {
-			size_t n;
-			for (n = 0; n < 94; n++)
-				ledcontrol_led_write(&color, 1);
-			_delay_us(50);
-		} else {
-			fprintf(stderr, "Invalid input\n");
-			// flush input
-			while (getchar() != '\n')
+		if (!(fscanf(stdin, "%2x%2x%2x", &color.r, &color.g, &color.b) == 3)) {
+			char c;
+			while ((c = getchar()) && (c != '\n') && (c != '\r'))
 				;
+
+			continue;
 		}
+
+		size_t n;
+		for (n = 0; n < 94; n++)
+			ledcontrol_led_write(&color, 1);
+		_delay_us(50);
 	}
 
 	return 0;
