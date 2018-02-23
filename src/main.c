@@ -34,9 +34,9 @@
 		_delay_ms(20);                   \
 	}
 
-#define RED OCR0A
-#define GREEN OCR0B
-#define BLUE OCR2B
+#define RED OCR0B
+#define GREEN OCR2B
+#define BLUE OCR0A
 
 
 int
