@@ -30,7 +30,7 @@ cmake_minimum_required(VERSION 2.8)
 set(AVR_MCU   "atmega328p")
 set(MCU_SPEED "16000000UL")
 set(AVR_PROGRAMMER         "arduino")
-set(AVR_UPLOADTOOL_PORT    "/dev/ttyUSB0")
+set(AVR_UPLOADTOOL_PORT    "/dev/ttyUSB0" CACHE PATH "arduino device file")
 set(AVR_UPLOADTOOL_OPTIONS "-b 57600")
 
 
