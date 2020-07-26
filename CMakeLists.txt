@@ -17,25 +17,32 @@
 # Copyright (C)
 #  2016-2020 Alexander Haase <ahaase@alexhaase.de>
 
-
-# Minimum required cmake version (must be set first).
 cmake_minimum_required(VERSION 2.8)
 
 
-# Configure atmega microcontroler and arduino settings
+# Configure the toolchain to compile for an arduino nano as target platform.
+# This is the intended platform for this project, but other targets can be
+# configured as well.
 #
-set(AVR_MCU "atmega328p")
+# NOTE: All relevant options for the AVR toolchain need to be configured before
+#       the CMake project is initialized (by calling the project function), as
+#       this will test and initialize the toolchain with these parameters.
+set(AVR_MCU   "atmega328p")
 set(MCU_SPEED "16000000UL")
-set(AVR_PROGRAMMER "arduino")
-set(AVR_UPLOADTOOL_PORT "/dev/ttyUSB0")
+set(AVR_PROGRAMMER         "arduino")
+set(AVR_UPLOADTOOL_PORT    "/dev/ttyUSB0")
 set(AVR_UPLOADTOOL_OPTIONS "-b 57600")
 
 
-# Project configuration
+# Initialize the project.
 #
+# NOTE: The entire toolchain needs to be configured before this function is
+#       called.
 project("ledcontrol" C)
 
 
+# ===========================
 # Recurse into subdirectories
-#
-add_subdirectory(src)
+# ===========================
+
+add_subdirectory("src")
