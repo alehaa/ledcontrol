@@ -15,7 +15,7 @@
  *
  *
  * Copyright (C)
- *  2016 Alexander Haase <ahaase@alexhaase.de>
+ *  2016-2020 Alexander Haase <ahaase@alexhaase.de>
  */
 
 /* The following code is a bootstraped version of light_ws2812.

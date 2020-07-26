@@ -15,7 +15,7 @@
  *
  *
  * Copyright (C)
- *  2016 Alexander Haase <ahaase@alexhaase.de>
+ *  2016-2020 Alexander Haase <ahaase@alexhaase.de>
  */
 
 #ifndef LEDCONTROL_UART_H
