@@ -37,5 +37,6 @@ addons:
       - avr-libc
 
 script:
-  - mkdir travis && cd travis
-  - cmake .. -DCMAKE_TOOLCHAIN_FILE=../externals/CMake-avr/generic-gcc-avr.cmake && make
+  - mkdir build && cd build
+  - cmake .. -DCMAKE_TOOLCHAIN_FILE=../externals/CMake-avr/generic-gcc-avr.cmake
+    && make
