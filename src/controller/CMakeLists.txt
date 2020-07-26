@@ -17,8 +17,12 @@
 # Copyright (C)
 #  2016-2020 Alexander Haase <ahaase@alexhaase.de>
 
-# ===========================
-# Recurse into subdirectories
-# ===========================
+# Compiler options for all builds
+#
+add_definitions("-DF_CPU=${MCU_SPEED}")
 
-add_subdirectory("controller")
+
+add_avr_executable(ledcontrol
+	led.c
+	uart.c
+	main.c)
