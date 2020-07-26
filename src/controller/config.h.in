@@ -18,12 +18,9 @@
  *  2016-2020 Alexander Haase <ahaase@alexhaase.de>
  */
 
-#ifndef LEDCONTROL_UART_H
-#define LEDCONTROL_UART_H
+/**
+ * This file contains all configuration options of the CMake build environment,
+ * which are used by the LED controller's firmware.
+ */
 
-
-void uart_init();
-void uart_init_stdio();
-
-
-#endif
+#cmakedefine AVR_BAUD_RATE @AVR_BAUD_RATE@

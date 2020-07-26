@@ -63,6 +63,5 @@ KeepEmptyLinesAtTheStartOfBlocks: false
 # Indent with a tab, which is 4 spaces width.
 IndentWidth: 4
 TabWidth: 4
-UseTab: ForIndentation
 
 ...

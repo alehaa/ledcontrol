@@ -17,6 +17,18 @@
 # Copyright (C)
 #  2016-2020 Alexander Haase <ahaase@alexhaase.de>
 
+# Define the baud rate for UART communication with the arduino. The default
+# setting of 9600 baud should fit most needs, as its the default for almost any
+# chipset. Although its quite slow, it should fit the needs for carrying the few
+# characters of the protocol implemented by the controller in a reasonable time.
+set(AVR_BAUD_RATE 9600 CACHE STRING "Baud rate for controller UART")
+
+# Generate a configuration file, which can be included and used by all source
+# code files of the controller's firmware.
+configure_file("config.h.in" "config.h")
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
+
 # Compiler options for all builds
 #
 add_definitions("-DF_CPU=${MCU_SPEED}")
