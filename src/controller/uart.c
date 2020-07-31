@@ -113,13 +113,22 @@ uart_getchar(FILE *stream)
 
 
 /**
- * Setup file descriptors for stdin and stdout via UART.
+ * UART input stream.
  *
- * To use UART via printf and similar functions, we need to make UART available
- * via global file descriptors. Later @ref uart_init_stdio will link them to
- * stdin, stdout and stderr.
+ * This stream can be used as input stream for default stream reading functions
+ * like `fscanf()` to read from UART instead of the console as drop-in
+ * replacement.
  */
 FILE uart_in = FDEV_SETUP_STREAM(NULL, uart_getchar, _FDEV_SETUP_READ);
+
+
+/**
+ * UART output stream.
+ *
+ * This stream can be used as output stream for default stream writing functions
+ * like `printf()` to write to UART instead of the console as drop-in
+ * replacement.
+ */
 FILE uart_out = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
 
 
