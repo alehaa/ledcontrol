@@ -19,12 +19,20 @@
  */
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 
 #include <util/delay.h>
 
-#include "led.h"
 #include "uart.h"
+
+
+typedef struct rgb
+{
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+} rgb;
 
 
 int
@@ -32,7 +40,6 @@ main(int argc, char **argv)
 {
 	uart_init();
 	uart_init_stdio();
-	ledcontrol_led_init();
 
 	rgb color;
 	while (true) {
@@ -43,11 +50,6 @@ main(int argc, char **argv)
 
 			continue;
 		}
-
-		size_t n;
-		for (n = 0; n < 94; n++)
-			ledcontrol_led_write(&color, 1);
-		_delay_us(50);
 	}
 
 	return 0;
