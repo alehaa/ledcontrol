@@ -28,7 +28,7 @@
 
 
 int
-main(int argc, char **argv)
+main()
 {
     /* Initialize all components of the firmware and setup all required ports
      * and registers for service. */
