@@ -49,6 +49,10 @@ AllowShortFunctionsOnASingleLine: None
 # Always break after the return type.
 AlwaysBreakAfterDefinitionReturnType: All
 
+# A function declaration’s or function definition’s parameters will either all
+# be on the same line or will have one line each.
+BinPackParameters: false
+
 # Always attach braces to surrounding context, but break before braces on enum,
 # function, and record definitions.
 BreakBeforeBraces: Mozilla

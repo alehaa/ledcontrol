@@ -33,6 +33,4 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_definitions("-DF_CPU=${MCU_SPEED}")
 
 
-add_avr_executable(ledcontrol
-	uart.c
-	main.c)
+add_avr_executable(ledcontrol main.c light.c uart.c)
