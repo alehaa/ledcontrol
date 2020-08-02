@@ -49,7 +49,7 @@
  * Service Routine and can be copied into the main program by calling @ref
  * uart_receive.
  */
-volatile bool uart_rx_ready = 0;
+static volatile bool uart_rx_ready = 0;
 
 /**
  * UART transmission ready flag.
@@ -58,7 +58,7 @@ volatile bool uart_rx_ready = 0;
  * calling @ref uart_send. It will be unset while there's an ongoing
  * transmission.
  */
-volatile bool uart_tx_ready = 1;
+static volatile bool uart_tx_ready = 1;
 
 
 /**
@@ -68,7 +68,7 @@ volatile bool uart_tx_ready = 1;
  * Service Routine, from where it can be copied into the main program by calling
  * @ref uart_receive.
  */
-char uart_rx_buffer[UART_BUFFER_SIZE];
+static char uart_rx_buffer[UART_BUFFER_SIZE];
 
 /**
  * Transmission buffer.
@@ -76,7 +76,7 @@ char uart_rx_buffer[UART_BUFFER_SIZE];
  * Any data to be transmitted will be copied into this buffer by @ref uart_send
  * before an Interrupt Service Routine will transmit the data via UART.
  */
-char uart_tx_buffer[UART_BUFFER_SIZE];
+static char uart_tx_buffer[UART_BUFFER_SIZE];
 
 
 /**
