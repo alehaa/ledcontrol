@@ -22,8 +22,25 @@
 #define LEDCONTROL_UART_H
 
 
+#include <stdbool.h>
+#include <stddef.h>
+
+
+/**
+ * The UART read and send buffer size.
+ *
+ * This size can be used to define individual buffers depending on the buffer
+ * sizes of the UART functions.
+ *
+ * NOTE: Beware, that the maximum buffer size is limited to the used `uint8_t`
+ *       type in UART functions. Therefore, this size must not exceed 256 bytes.
+ */
+#define UART_BUFFER_SIZE 32
+
+
 void uart_init();
-void uart_init_stdio();
+bool uart_receive(char *dst, size_t len);
+bool uart_send(const char *src);
 
 
 #endif

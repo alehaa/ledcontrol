@@ -19,38 +19,31 @@
  */
 
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 
+#include <avr/interrupt.h>
 #include <util/delay.h>
 
 #include "uart.h"
 
 
-typedef struct rgb
-{
-	uint8_t r;
-	uint8_t g;
-	uint8_t b;
-} rgb;
-
-
 int
 main(int argc, char **argv)
 {
-	uart_init();
-	uart_init_stdio();
+    /* Initialize all components of the firmware and setup all required ports
+     * and registers for service. */
+    uart_init(); /* enable UART */
+    sei();       /* enable interupts */
 
-	rgb color;
-	while (true) {
-		if (!(fscanf(stdin, "%2x%2x%2x", &color.r, &color.g, &color.b) == 3)) {
-			char c;
-			while ((c = getchar()) && (c != '\n') && (c != '\r'))
-				;
 
-			continue;
-		}
-	}
+    char buffer[UART_BUFFER_SIZE];
+    char b[UART_BUFFER_SIZE];
+    while (true) {
+        if (uart_receive(buffer, UART_BUFFER_SIZE)) {
+            snprintf(b, 64, "got message: %s\n", buffer);
+            uart_send(b);
+        }
+    }
 
-	return 0;
+    return 0;
 }

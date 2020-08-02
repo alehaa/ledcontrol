@@ -19,14 +19,16 @@
  */
 
 /* The code in this file was inspired by the Atmega328p manual and
- * http://www.appelsiini.net/2011/simple-usart-with-avr-libc
- */
+ * https://www.mikrocontroller.net/articles/Interrupt */
 
 #include "uart.h"
 #include "config.h"
 
-#include <stdio.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <string.h>
 
+#include <avr/interrupt.h>
 #include <avr/io.h>
 
 
@@ -38,6 +40,43 @@
  *       included, as it affects the calculation. */
 #define BAUD AVR_BAUD_RATE
 #include <util/setbaud.h>
+
+
+/**
+ * UART receive ready flag.
+ *
+ * This flag is set, if a string has been received completly by the Interrupt
+ * Service Routine and can be copied into the main program by calling @ref
+ * uart_receive.
+ */
+volatile bool uart_rx_ready = 0;
+
+/**
+ * UART transmission ready flag.
+ *
+ * This flag is set, if a new string can be copied in the transmission buffer by
+ * calling @ref uart_send. It will be unset while there's an ongoing
+ * transmission.
+ */
+volatile bool uart_tx_ready = 1;
+
+
+/**
+ * Receive buffer.
+ *
+ * Any data received via UART is writtin into this buffer by an Interrupt
+ * Service Routine, from where it can be copied into the main program by calling
+ * @ref uart_receive.
+ */
+char uart_rx_buffer[UART_BUFFER_SIZE];
+
+/**
+ * Transmission buffer.
+ *
+ * Any data to be transmitted will be copied into this buffer by @ref uart_send
+ * before an Interrupt Service Routine will transmit the data via UART.
+ */
+char uart_tx_buffer[UART_BUFFER_SIZE];
 
 
 /**
@@ -68,81 +107,169 @@ uart_init()
      * additional configuration
      **************************/
 
-    UCSR0C = _BV(UCSZ01) | _BV(UCSZ00); /* 8-bit data */
-    UCSR0B = _BV(RXEN0) | _BV(TXEN0);   /* Enable RX and TX */
+    UCSR0C = _BV(UCSZ01) | _BV(UCSZ00);             /* 8-bit data */
+    UCSR0B = _BV(RXCIE0) | _BV(RXEN0) | _BV(TXEN0); /* enable RX and TX */
 }
 
 
 /**
- * Send character @p c via UART.
+ * Data receive Interrupt Service Routine.
  *
- *
- * @param c      Char to be send.
- * @param stream Pointer to sending stream.
- *
- * @return This function returns 0 after sucessful reading one byte.
+ * This function provides the Interrupt Service Routine (ISR) to receive data
+ * from UART and writing it into @ref uart_tx_buffer. It is triggered, if the
+ * data register `UDR0` has received the next byte and is ready to be read.
  */
-static int
-uart_putchar(char c, FILE *stream)
+ISR(USART_RX_vect)
 {
-    /* Wait until data register empty, before pushing the next character byte
-     * into the send buffer register. */
-    loop_until_bit_is_set(UCSR0A, UDRE0);
-    UDR0 = c;
+    /* Maintain a static counter, on which position to store a received byte in
+     * the buffer. As only a single byte can be received via UART on each call,
+     * this will iterate over all bytes of the buffer across multiple calls of
+     * this ISR function. */
+    static uint8_t uart_rx_cnt = 0;
 
-    return 0;
+    /* Read the received byte from the data register. This will remove the
+     * interrupt flag, indicating this byte has been read and the next one could
+     * be received or send by the atmega's firmware. */
+    char data = UDR0;
+
+    /* If the buffer can't handle new data, as it currently stores the last
+     * received string, just exist the ISR function and discard the received
+     * byte.
+     *
+     * NOTE: This needs to be done AFTER the data register has been read to
+     *       clear the interrupt flag. Otherwise this ISR function will be
+     *       called over and over again for the same byte without any chance for
+     *       the main program to clear the receive buffer. */
+    if (uart_rx_ready)
+        return;
+
+    /* If the end of the string is reached, terminate the string by a null
+     * character and set the related ready flag, so the main program can copy
+     * the received string. In addition, the internal counter gets reset, so the
+     * next received data is stored at the begin of the buffer. */
+    if (data == '\r' || data == '\n') {
+        uart_rx_buffer[uart_rx_cnt] = '\0';
+        uart_rx_ready = true;
+        uart_rx_cnt = 0;
+        return;
+    }
+
+    /* If the buffer is not filled completly yet, store the next byte in the
+     * buffer and increment the counter for receiving the next byte. */
+    if (uart_rx_cnt < (UART_BUFFER_SIZE - 1))
+        uart_rx_buffer[uart_rx_cnt++] = data;
 }
 
 
 /**
- * Receive one byte via UART.
+ * Receive a string from UART.
+ *
+ * This function copys a string from @ref uart_rx_buffer into @p dst, which was
+ * previously received by the data receive Interrupt Service Routine. This
+ * allows the calling function to perform other tasks while receiving data and
+ * copy the data efficiently, when a whole line has been received.
  *
  *
- * @param stream Pointer to receiving stream.
+ * @param dst Where to copy the data.
+ * @param len The length of @p dst.
  *
- * @return This function returns the received byte.
+ * @return On success this function returns true. If the read buffer is not
+ *         ready yet (i.e. the data has not been received completly yet), false
+ *         will be returned.
  */
-static int
-uart_getchar(FILE *stream)
+bool
+uart_receive(char *dst, size_t len)
 {
-    /* Wait until data exists in the receive buffer register, before passing it
-     * to the calling function. */
-    loop_until_bit_is_set(UCSR0A, RXC0);
-    return (int)UDR0;
+    /* If no string has been received completly yet, return false as error code
+     * indicating no data can be read from the receive buffer right now.
+     *
+     * NOTE: This check is not thread-safe, as two threads could evaluate this
+     *       variable simultanous and continue, before one of them sets the
+     *       flag. However, as the main program is single-threaded only, there
+     *       shouldn't be any race conditions. */
+    if (!uart_rx_ready)
+        return false;
+
+    /* Copy the buffer into the provided destination and reset the ready flag,
+     * so the next string can be received by the ISR function. */
+    strncpy(dst, uart_rx_buffer, len);
+    uart_rx_ready = false;
+    return 1;
 }
 
 
 /**
- * UART input stream.
+ * Data transmission Interrupt Service Routine.
  *
- * This stream can be used as input stream for default stream reading functions
- * like `fscanf()` to read from UART instead of the console as drop-in
- * replacement.
+ * This function provides the Interrupt Service Routine (ISR) to transmit data
+ * of @ref uart_tx_buffer via UART. It is triggered, if the send register `UDR0`
+ * is ready to send the next byte.
  */
-FILE uart_in = FDEV_SETUP_STREAM(NULL, uart_getchar, _FDEV_SETUP_READ);
-
-
-/**
- * UART output stream.
- *
- * This stream can be used as output stream for default stream writing functions
- * like `printf()` to write to UART instead of the console as drop-in
- * replacement.
- */
-FILE uart_out = FDEV_SETUP_STREAM(uart_putchar, NULL, _FDEV_SETUP_WRITE);
-
-
-/**
- * Setup stdin, stdout and stderr for usage with UART.
- *
- * This function will setup the global file descriptors @ref uart_in and @ref
- * uart_out as stdin, stdout and stderr, so they can be used via normal printf
- * and similar functions.
- */
-void
-uart_init_stdio()
+ISR(USART_UDRE_vect)
 {
-    stdin = &uart_in;
-    stdout = &uart_out;
-    stderr = &uart_out;
+    /* Maintain a static pointer to the current position in the send buffer,
+     * which is incremented on each call of this ISR function. As only a single
+     * byte can be sent via UART on each call, this will iterate over all bytes
+     * in the buffer across multiple calls of this ISR function.
+     *
+     * NOTE: The increment does NOT check for buffer overflows. Therefore, any
+     *       data to be sent needs a terminating null character to stop the
+     *       transmission. */
+    static char *uart_tx_p = uart_tx_buffer;
+    char data = *uart_tx_p++;
+
+    /* If the end of the buffer is reached, disable the UDRE interrupt, so this
+     * function is not called until there's new data available for transmission.
+     * In addition, the internal pointer gets reset, so the next transmission
+     * starts from the begin of the buffer. */
+    if (data == '\0') {
+        UCSR0B &= ~(_BV(UDRIE0));
+        uart_tx_p = uart_tx_buffer;
+        uart_tx_ready = true;
+        return;
+    }
+
+    /* Send the current byte via UART by simply writing the value into the UART
+     * input / output register. The atmega's firmware will then take and
+     * transmit the byte automatically. */
+    UDR0 = data;
+}
+
+
+/**
+ * Send a string via UART.
+ *
+ * This function copys the given string @p src into the send buffer @ref
+ * uart_tx_buffer, before starting an asynchronous UART transmission. It will
+ * return after the data has been copied into the buffer, so other tasks can be
+ * performed while the data is transmitted.
+ *
+ *
+ * @param src The data to be copied. Needs to have a terminating null character.
+ *
+ * @return On success this function returns true. If the send buffer is not
+ *         ready yet (i.e. another transmission has not been finished yet),
+ *         false will be returned.
+ */
+bool
+uart_send(const char *src)
+{
+    /* If the UART connection is not ready for transmitting new data, i.e. as
+     * data currently is being sent, return false as error code indicating no
+     * data can be written to the send buffer right now.
+     *
+     * NOTE: This check is not thread-safe, as two threads could evaluate this
+     *       variable simultanous and continue, before one of them sets the
+     *       flag. However, as the main program is single-threaded only, there
+     *       shouldn't be any race conditions. */
+    if (!uart_tx_ready)
+        return false;
+
+    /* Lock the UART send buffer before copying the passed string into the UART
+     * send buffer. Finally, the send interupt will be enabled to start sending
+     * the buffer contents via UART and return a success status code. */
+    uart_tx_ready = false;
+    strncpy(uart_tx_buffer, src, UART_BUFFER_SIZE);
+    UCSR0B |= _BV(UDRIE0);
+    return true;
 }
