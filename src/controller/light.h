@@ -23,6 +23,7 @@
 
 
 #include <stdbool.h>
+#include <stdint.h>
 
 
 /**
@@ -42,7 +43,23 @@ typedef struct
 } light_status;
 
 
+/**
+ * RGB color channel definition.
+ *
+ * This struct type can be used to store the individual channels of RGB colors.
+ */
+typedef struct rgb
+{
+    uint8_t r; /**< Color channel for red. */
+    uint8_t g; /**< Color channel for green. */
+    uint8_t b; /**< Color channel for blue. */
+} rgb;
+
+
 extern light_status light;
+
+
+rgb light_rgb();
 
 
 #endif
