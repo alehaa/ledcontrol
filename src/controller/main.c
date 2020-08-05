@@ -154,7 +154,7 @@ parse_command()
         noop();
     else if (parse_command_int(buffer, "sat", "?sat", 100, &(light.saturation)))
         noop();
-    else if (parse_command_int(buffer, "lum", "?lum", 100, &(light.luminance)))
+    else if (parse_command_int(buffer, "val", "?val", 100, &(light.value)))
         noop();
 }
 

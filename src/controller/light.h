@@ -29,7 +29,7 @@
  * State configuration for the light.
  *
  * This struct type can be used to configure a given state of the light or save
- * previous ones. As most home automation systems use the HSL color system, this
+ * previous ones. As most home automation systems use the HSV color system, this
  * struct reflects the required parameters for this system, too. Its values
  * should be sufficient to generate the RGB values if required.
  */
@@ -38,7 +38,7 @@ typedef struct
     bool power;     /**< The light's power status. */
     int hue;        /**< The light's hue. */
     int saturation; /**< The light's saturation. */
-    int luminance;  /**< The light's luminance. */
+    int value;      /**< The light's brightness. */
 } light_status;
 
 
