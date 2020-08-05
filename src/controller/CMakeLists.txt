@@ -20,7 +20,7 @@
 # setting of 9600 baud should fit most needs, as its the default for almost any
 # chipset. Although its quite slow, it should fit the needs for carrying the few
 # characters of the protocol implemented by the controller in a reasonable time.
-set(AVR_BAUD_RATE 9600 CACHE STRING "Baud rate for controller UART")
+set(LED_BAUD_RATE 9600 CACHE STRING "Baud rate for controller UART")
 
 # Generate a configuration file, which can be included and used by all source
 # code files of the controller's firmware.

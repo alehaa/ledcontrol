@@ -23,4 +23,4 @@
  * which are used by the LED controller's firmware.
  */
 
-#cmakedefine AVR_BAUD_RATE @AVR_BAUD_RATE@
+#cmakedefine LED_BAUD_RATE @LED_BAUD_RATE@

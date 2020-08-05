@@ -38,7 +38,7 @@
  *
  * NOTE: The BAUD and F_CPU macros need to be set *before* the utility header is
  *       included, as it affects the calculation. */
-#define BAUD AVR_BAUD_RATE
+#define BAUD LED_BAUD_RATE
 #include <util/setbaud.h>
 
 
