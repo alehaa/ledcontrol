@@ -22,6 +22,12 @@
 # characters of the protocol implemented by the controller in a reasonable time.
 set(LED_BAUD_RATE 9600 CACHE STRING "Baud rate for controller UART")
 
+# Define the time fading the light should take. The default setting of 3 seconds
+# should result in a smooth transition between very dark and light colors, but
+# may be too long for slight changes in colors. It can be altered to any number
+# of seconds. However, see the notes on FADE_WAIT before increasing.
+set(LED_FADE_TIME 3 CACHE STRING "")
+
 # Generate a configuration file, which can be included and used by all source
 # code files of the controller's firmware.
 configure_file("config.h.in" "config.h")

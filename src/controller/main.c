@@ -26,8 +26,55 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
+#include "fade.h"
 #include "light.h"
 #include "uart.h"
+
+
+/**
+ * Fade the light.
+ *
+ * This function is responsible for fading the light into its desired state over
+ * a given time. If a new fade cycle is initiated, it stores the current light
+ * configuration, calculates the new one and fades smothly to it.
+ *
+ *
+ * @param set If `true`, a new fade cycle is initiated. Only @ref parse_command
+ *            should use this functionality.
+ */
+static void
+fade_light(bool set)
+{
+    /* Static variables will be used to store the previous and next colors on
+     * initialization and maintain a counter for the current step of the fading
+     * process. */
+    static uint8_t step = 0;
+    static rgb prev = {0}, next;
+
+    /* If a new fade cycle should be initialized, store the currently configured
+     * color and the one to fade to in the internal variables and reset the
+     * counter to its maximum. If there's an ongoing fade cycle, this operation
+     * will abort the running one and copy its current state, so it will be
+     * continued in the fade cycle now starting. */
+    if (set) {
+        next = light_rgb();
+        step = FADE_STEPS;
+    }
+
+    /* If there are remaining steps for an ongoing fading cycle, calculate the
+     * color for the current fading step before setting the related PWM output
+     * channel registers. */
+    if (step > 0) {
+        float fade = (FADE_STEPS - (--step)) / FADE_STEPS;
+        rgb cur = {.r = prev.r + ((next.r - prev.r) * fade),
+                   .g = prev.g + ((next.g - prev.g) * fade),
+                   .b = prev.b + ((next.b - prev.b) * fade)};
+
+        /* Wait for a slight amount of time before eventually getting to the
+         * next fading step to imitate a smooth change between colors. */
+        _delay_ms(FADE_WAIT);
+    }
+}
 
 
 /**
@@ -156,6 +203,13 @@ parse_command()
         noop();
     else if (parse_command_int(buffer, "val", "?val", 100, &(light.value)))
         noop();
+
+
+    /* If the parsed command was a setter command, initiate a new fading cycle
+     * to fade to the altered color settings. For ongoing fading cycles, the
+     * counter will be reset by this operation, but altered data is not lost. */
+    if (buffer[0] != '?')
+        fade_light(true);
 }
 
 
@@ -170,6 +224,11 @@ main()
     /* Use an infinite loop for repeatedly update the PWM registers (i.e. to
      * fade colors) and check for new commands to be parsed executed. */
     while (true) {
+        /* Check if there's an ongoing fading cycle and update the PWM registers
+         * for setting the color of the current fading step. This function also
+         * controls the sleep time between two fading steps, if necessary. */
+        fade_light(false);
+
         /* Finally, check the UART buffers for any new commands. If a new
          * command is available, it will be parsed and necessary steps executed
          * by the following function. */
