@@ -28,6 +28,7 @@
 
 #include "fade.h"
 #include "light.h"
+#include "pwm.h"
 #include "uart.h"
 
 
@@ -49,7 +50,7 @@ fade_light(bool set)
      * initialization and maintain a counter for the current step of the fading
      * process. */
     static uint8_t step = 0;
-    static rgb prev = {0}, next;
+    static rgb prev, next;
 
     /* If a new fade cycle should be initialized, store the currently configured
      * color and the one to fade to in the internal variables and reset the
@@ -57,6 +58,7 @@ fade_light(bool set)
      * will abort the running one and copy its current state, so it will be
      * continued in the fade cycle now starting. */
     if (set) {
+        prev = pwm_get_rgb();
         next = light_rgb();
         step = FADE_STEPS;
     }
@@ -66,9 +68,9 @@ fade_light(bool set)
      * channel registers. */
     if (step > 0) {
         float fade = (FADE_STEPS - (--step)) / FADE_STEPS;
-        rgb cur = {.r = prev.r + ((next.r - prev.r) * fade),
-                   .g = prev.g + ((next.g - prev.g) * fade),
-                   .b = prev.b + ((next.b - prev.b) * fade)};
+        pwm_set_rgb(prev.r + ((next.r - prev.r) * fade),
+                    prev.g + ((next.g - prev.g) * fade),
+                    prev.b + ((next.b - prev.b) * fade));
 
         /* Wait for a slight amount of time before eventually getting to the
          * next fading step to imitate a smooth change between colors. */
@@ -218,6 +220,7 @@ main()
 {
     /* Initialize all components of the firmware and setup all required ports
      * and registers for service. */
+    pwm_init();  /* enable PWM */
     uart_init(); /* enable UART */
     sei();       /* enable interupts */
 
