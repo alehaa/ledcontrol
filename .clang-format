@@ -30,9 +30,6 @@ BasedOnStyle: LLVM
 # A maximum of two blank lines are allowed.
 MaxEmptyLinesToKeep: 2
 
----
-Language: Cpp
-
 # Align escaped newlines as far left as possible.
 AlignEscapedNewlinesLeft: true
 
@@ -67,4 +64,10 @@ KeepEmptyLinesAtTheStartOfBlocks: false
 IndentWidth: 4
 TabWidth: 4
 
-...
+
+# ==========
+# JavaScript
+# ==========
+
+# Always use single quotes as JavaScriptQuoteStyle for JavaScript strings.
+JavaScriptQuotes: Single

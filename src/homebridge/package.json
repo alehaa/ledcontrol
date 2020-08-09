@@ -1,0 +1,20 @@
+{
+    "name": "homebridge-arduino-led",
+    "version": "0.0.1",
+    "description": "Homebridge plugin for ArduinoLED controllers",
+    "license": "GPL-3.0-or-later",
+    "keywords": [
+        "homebridge-plugin",
+        "homekit",
+        "light",
+        "lamp",
+        "LED"
+    ],
+    "engines": {
+        "node": ">=10.17.0",
+        "homebridge": ">=0.4.8"
+    },
+    "dependencies": {
+        "serial-io": "^1.2.0"
+    }
+}
