@@ -211,18 +211,19 @@ class ArduinoLED
 
 
     /**
-     * Get the current state of a specific @p characteristic.
+     * Get the current state of a specific characteristic.
      *
-     * This method issues a get-command to receive the current state of the
-     * given @p characteristic for the connected light.
+     * This method issues a get-command to receive the current state of a given
+     * characteristic for the connected light. The passed @p command will be
+     * used to lookup the related characteristic in the global lookup table.
      *
      *
-     * @param characteristic The characteristic to lookup.
-     * @param callback       The callback to call after issuing the command.
+     * @param command  The command to issue.
+     * @param callback The callback to call after issuing the command.
      */
-    getCharacteristic(characteristic, callback)
+    getCharacteristic(command, callback)
     {
-        this.queue.push('?' + characteristic);
+        this.queue.push('?' + command);
 
         /* Pass the cached state to the callback to avoid ugly glitches in the
          * homekit UI for temporarily showing no data for the device until the
@@ -233,23 +234,25 @@ class ArduinoLED
          * NOTE: This callback needs always to be called, even if no data is
          *       returned. Otheriwse apple devices will asume the device is not
          *       responding. */
-        callback(null, this.cache[characteristic] || 0);
+        callback(null, this.cache[command] || 0);
     }
 
 
     /**
-     * Set a new @p value for a specific @p characteristic.
+     * Set a new @p value for a specific characteristic.
      *
-     * This method issues a set-command to update the @p value of the given @p
-     * characteristic for the connected light.
+     * This method issues a set-command to update the @p value of a given
+     * characteristic for the connected light. The passed @p command will be
+     * used to lookup the related characteristic in the global lookup table.
      *
      *
+     * @param command  The command to issue.
      * @param value    The new value to be set.
      * @param callback The callback to call after issuing the command.
      */
-    setCharacteristic(characteristic, value, callback)
+    setCharacteristic(command, value, callback)
     {
-        this.queue.push(characteristic + ' ' + value);
+        this.queue.push(command + ' ' + value);
 
         /* NOTE: This callback needs always to be called, even if no data is
          *       returned. Otheriwse apple devices will asume the device is not
