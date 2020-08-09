@@ -22,7 +22,6 @@
 #define LEDCONTROL_LIGHT_H
 
 
-#include <stdbool.h>
 #include <stdint.h>
 
 
@@ -36,7 +35,7 @@
  */
 typedef struct
 {
-    bool power;     /**< The light's power status. */
+    int power;      /**< The light's power status. */
     int hue;        /**< The light's hue. */
     int saturation; /**< The light's saturation. */
     int value;      /**< The light's brightness. */

@@ -102,7 +102,7 @@ class ArduinoLED
          * internal methods of this class. */
         this.service.getCharacteristic(this.Characteristic.On)
             .on('get', this.getPowerState.bind(this))
-            .on('set', this.setPowerState.bind(this));
+            .on('set', this.setCharacteristic.bind(this, 'pwr'));
 
         this.service.getCharacteristic(this.Characteristic.Brightness)
             .on('get', this.getCharacteristic.bind(this, 'val'))
@@ -172,20 +172,17 @@ class ArduinoLED
      */
     handleResponse(response)
     {
-        /* For power responses, the received result will be translated to an
-         * intever value, which is cached for subsequent homekit requests. */
+        /* All responses handled by this method will have integer values as
+         * paramter. Therefore, the received value is parsed as such and can be
+         * used to handle the characteristics covered below. */
+        var value = parseInt(response.split(' ')[1]);
         if (response.indexOf('pwr') > -1) {
-            this.power = (response == 'pwr on\n') ? 1 : 0;
+            this.power = value;
             this.service.updateCharacteristic(this.Characteristic.On,
                                               this.power);
-            return;
         }
 
-        /* Any other responses will have integer values. Therefore, the received
-         * value is parsed as such and can be used to handle the characteristics
-         * covered below. */
-        var value = parseInt(response.split(' ')[1]);
-        if (response.indexOf('val') > -1)
+        else if (response.indexOf('val') > -1)
             this.service.updateCharacteristic(this.Characteristic.Brightness,
                                               value);
 
@@ -270,30 +267,5 @@ class ArduinoLED
          *       has been cached yet. Otheriwse apple devices will asume the
          *       device is not responding.*/
         callback(null, this.power);
-    }
-
-
-    /**
-     * Set the power state.
-     *
-     * This method issues a new command to set the power state of the connected
-     * light.
-     *
-     * @note This method is a specialized version of @ref setCharacteristic, as
-     *       setting the power state requires a string instead of an integer.
-     *
-     *
-     * @param value    The new power state as integer. Anything other than zero
-     *                 will be interpreted as `on`, like for any other boolean.
-     * @param callback The callback to call after issuing the command.
-     */
-    setPowerState(value, callback)
-    {
-        this.queue.push(value ? 'pwr on' : 'pwr off');
-
-        /* NOTE: This callback needs always to be called, even if no data is
-         *       returned. Otheriwse apple devices will asume the device is not
-         *       responding. */
-        callback(null);
     }
 }

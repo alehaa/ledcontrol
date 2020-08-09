@@ -186,15 +186,12 @@ parse_command()
      * parse commands
      ****************/
 
-    /* Set the power status either to 'on' or 'off' to enable or disable the
-     * light. To simplify the implementation, any other parameter value than
-     * 'on' will be evaluated as 'off'. */
-    if (IS_COMMAND("pwr"))
-        light.power = IS_COMMAND("pwr on");
-
-    /* Get the current power status. */
-    else if (IS_COMMAND("?pwr"))
-        uart_send(light.power ? "pwr on\n" : "pwr off\n");
+    /* Parse the power status. Although this could be handled by a simple on/off
+     * parameter, an integer will be used, so the same code as for the other
+     * parameters can be reused not just by the LED controller's firmware, but
+     * also the related homebridge plugin or any other third-party code. */
+    if (parse_command_int(buffer, "pwr", "?pwr", 1, &(light.power)))
+        noop();
 
     /* Parse additional commands for hue, saturation and luminance with integer
      * parameters. Each of them will have an allowed range from 0 to 100, except
