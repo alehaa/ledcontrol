@@ -82,18 +82,22 @@ fade_light(bool set)
 /**
  * Check if the buffer contains a specific @p command.
  *
- * This macro checks, whether the string in `buffer` has the given @p command as
- * its prefix, to check if this command should be handled right now. Additional
- * characters of the `buffer` will not be checked, as they may be parameters of
- * the command. Its intended use is in if-clauses in the @ref parse_command
- * function.
+ * This function checks, whether the string in @p buffer has the given @p
+ * command as its prefix, to check if this command should be handled right now.
+ * Additional characters of the @p buffer will not be checked, as they may be
+ * parameters of the command. Its intended use is in if-clauses in the @ref
+ * parse_command function.
  *
  *
  * @param command The command to be checked.
  *
- * @return Returns true, if `buffer` is a type of @p command, otherwise false.
+ * @return Returns true, if @p buffer is a type of @p command, otherwise false.
  */
-#define IS_COMMAND(command) (strncmp(command, buffer, strlen(command)) == 0)
+static inline bool
+is_command(const char *buffer, const char *command)
+{
+    return (strncmp(command, buffer, strlen(command)) == 0);
+}
 
 
 /**
@@ -126,7 +130,7 @@ parse_command_int(const char *buffer,
      *
      * NOTE: If the parsed integer is not within the specified bounds, this
      *       command will be ignored entirely. */
-    if (IS_COMMAND(cmd_set)) {
+    if (is_command(buffer, cmd_set)) {
         int tmp = atoi(buffer + strlen(cmd_set) + 1);
         if (tmp >= 0 && tmp <= max)
             *dst = tmp;
@@ -141,7 +145,7 @@ parse_command_int(const char *buffer,
      *       the light is still fading to this color. This allows the user to
      *       see the light's desired state instead of a random snapshot during
      *       fadeing. */
-    else if (IS_COMMAND(cmd_get)) {
+    else if (is_command(buffer, cmd_get)) {
         char tmp[UART_BUFFER_SIZE];
         snprintf(tmp, UART_BUFFER_SIZE, "%s %d\n", cmd_set, *dst);
         uart_send(tmp);
