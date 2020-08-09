@@ -63,8 +63,11 @@ class ArduinoLED
         this.config = config;
         this.api = api;
 
-        this.Characteristic = this.api.hap.Characteristic;
 
+        /* Gather a list of all characteristics supported of the light depending
+         * on the configuration passed to this plugin instance. It will be
+         * statically cached, as it doesn't change over runtime. */
+        this.characteristics = this.getSupportedCharacteristics();
 
         /* Initialize an empty command queue and start a related worker-function
          * in the background to issue these commands. For further information
@@ -72,13 +75,37 @@ class ArduinoLED
         this.queue = [];
         setInterval(() => this.sendCommands(), 500);
 
-        /* Cache the current power state to avoid glitches in the homekit UI
-         * when returning an offline state until the response from the LED
-         * controller has been parsed.
-         *
-         * TODO: Not just the power state, but all characteristics should be
-         *       cached appropriately in an array. */
-        this.power = false;
+        /* Initialize an empty cache for previously received responses from the
+         * LED controller. These will be used as response for commands, before
+         * the (relative slow) UART response is received, parsed and send to the
+         * homekit client. */
+        this.cache = [];
+    }
+
+
+    /**
+     * Get the supported characteristics for this light.
+     *
+     * This method gathers all characteristics supported by this light depending
+     * on the configuration passed to this plugin instance.
+     *
+     *
+     * @return The supported characteristics for this light.
+     */
+    getSupportedCharacteristics()
+    {
+        const characteristic = this.api.hap.Characteristic;
+        const tmp = {
+            'pwr' : characteristic.On,
+            'val' : characteristic.Brightness
+        };
+
+        if (true) {
+            tmp.hue = characteristic.Hue;
+            tmp.sat = characteristic.Saturation;
+        }
+
+        return tmp;
     }
 
 
@@ -100,23 +127,10 @@ class ArduinoLED
 
         /* Create handlers for the specific characteristics and map them to the
          * internal methods of this class. */
-        this.service.getCharacteristic(this.Characteristic.On)
-            .on('get', this.getPowerState.bind(this))
-            .on('set', this.setCharacteristic.bind(this, 'pwr'));
-
-        this.service.getCharacteristic(this.Characteristic.Brightness)
-            .on('get', this.getCharacteristic.bind(this, 'val'))
-            .on('set', this.setCharacteristic.bind(this, 'val'));
-
-        if (true) {
-            this.service.getCharacteristic(this.Characteristic.Hue)
-                .on('get', this.getCharacteristic.bind(this, 'hue'))
-                .on('set', this.setCharacteristic.bind(this, 'hue'));
-
-            this.service.getCharacteristic(this.Characteristic.Saturation)
-                .on('get', this.getCharacteristic.bind(this, 'sat'))
-                .on('set', this.setCharacteristic.bind(this, 'sat'));
-        }
+        for (const [command, char] of Object.entries(this.characteristics))
+            this.service.getCharacteristic(char)
+                .on('get', this.getCharacteristic.bind(this, command))
+                .on('set', this.setCharacteristic.bind(this, command));
 
         /* Return the list of services, this class instance provides for the
          * controlled light. For this plugin, this is just the lightbulb
@@ -172,29 +186,27 @@ class ArduinoLED
      */
     handleResponse(response)
     {
-        /* All responses handled by this method will have integer values as
-         * paramter. Therefore, the received value is parsed as such and can be
-         * used to handle the characteristics covered below. */
-        var value = parseInt(response.split(' ')[1]);
-        if (response.indexOf('pwr') > -1) {
-            this.power = value;
-            this.service.updateCharacteristic(this.Characteristic.On,
-                                              this.power);
-        }
+        /* Check if the related command is a valid response to be handled and if
+         * so, start processing the response. */
+        const command = response.split(' ')[0];
+        if (command in this.characteristics) {
+            /* All responses handled by this method will have integer values as
+             * paramter. Therefore, the received value is parsed as such and can
+             * be used to handle the characteristics covered below. */
+            const value = parseInt(response.split(' ')[1]);
 
-        else if (response.indexOf('val') > -1)
-            this.service.updateCharacteristic(this.Characteristic.Brightness,
+            /* Cache the obtained response value for later replies by the
+             * getCharacteristic method before updating the related
+             * characteristic in homebridge / homekit. */
+            this.cache[command] = value;
+            this.service.updateCharacteristic(this.characteristics[command],
                                               value);
-
-        else if (true) {
-            if (response.indexOf('hue') > -1)
-                this.service.updateCharacteristic(this.Characteristic.Hue,
-                                                  value);
-
-            else if (response.indexOf('sat') > -1)
-                this.service.updateCharacteristic(
-                    this.Characteristic.Saturation, value);
         }
+
+        /* If the command can't be handled by this plugin, issue an error
+         * message in the homebridge logs. */
+        else
+            this.log.error('unable to handle response for command ' + command);
     }
 
 
@@ -212,10 +224,16 @@ class ArduinoLED
     {
         this.queue.push('?' + characteristic);
 
-        /* NOTE: This callback needs always to be called, even if no data is
+        /* Pass the cached state to the callback to avoid ugly glitches in the
+         * homekit UI for temporarily showing no data for the device until the
+         * command issued above is executed. After a restart of homebridge, this
+         * result may be inappropriate, as there is no cached state yet, but
+         * this should be fine for these rare cases.
+         *
+         * NOTE: This callback needs always to be called, even if no data is
          *       returned. Otheriwse apple devices will asume the device is not
          *       responding. */
-        callback(null);
+        callback(null, this.cache[characteristic] || 0);
     }
 
 
@@ -237,35 +255,5 @@ class ArduinoLED
          *       returned. Otheriwse apple devices will asume the device is not
          *       responding. */
         callback(null);
-    }
-
-
-    /**
-     * Get the current power state.
-     *
-     * This method issues a get-command to receive the current power state of
-     * the connected light.
-     *
-     * @note This method is nearly identical to @ref getCharacteristic, but adds
-     *       returning a cached power state to the callback to improve the user
-     *       experience.
-     *
-     *
-     * @param callback The callback to call after issuing the command.
-     */
-    getPowerState(callback)
-    {
-        this.queue.push('?pwr');
-
-        /* Pass the cached power state to the callback to avoid ugly glitches in
-         * the UI for temporarily showing offline devices until the command
-         * issued above is executed. After a restart of homebridge, this result
-         * may be inappropriate, as there is no cached state yet, but this
-         * should be fine for these rare cases.
-         *
-         * NOTE: This callback needs always to be called, even if no power state
-         *       has been cached yet. Otheriwse apple devices will asume the
-         *       device is not responding.*/
-        callback(null, this.power);
     }
 }
