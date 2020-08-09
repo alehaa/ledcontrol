@@ -252,6 +252,11 @@ class ArduinoLED
      */
     setCharacteristic(command, value, callback)
     {
+        /* If value is a boolean (for power), it needs to be converted to an
+         * integer before issuing the command. */
+        if (typeof value === 'boolean')
+            value = value ? 1 : 0;
+
         this.queue.push(command + ' ' + value);
 
         /* NOTE: This callback needs always to be called, even if no data is
