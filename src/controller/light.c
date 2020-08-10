@@ -28,8 +28,12 @@
  *
  * This struct stores the target configuration of the light, which it will fade
  * to and keep thereafter.
+ *
+ * @note The status is defined as array an will store either just a single
+ *       configuration for RGB LED lights, or multiple ones in monochrome mode.
+ *       See @ref LED_CHANNELS for further details.
  */
-light_status light = {0};
+light_status light[LED_CHANNELS] = {0};
 
 
 /**
@@ -58,6 +62,8 @@ make_rgb(float r, float g, float b)
     return tmp;
 }
 
+
+#ifdef LED_RGB
 
 /**
  * Convert a color from HSV to RGB.
@@ -117,6 +123,8 @@ hsv2rgb(float h, float s, float v)
  * to RGB colors. It is required, as the light controller uses three individual
  * PWM channels as outputs to connect an RGB LED strip.
  *
+ * @note This is the RGB implementation of this function.
+ *
  *
  * @return The current light configuration from @ref light converted to RGB.
  */
@@ -126,11 +134,42 @@ light_rgb()
     /* If the light is not powered on at all, obviously the output color is
      * black. Therefore no color needs to be converted and this function can
      * return immediately. */
-    if (!light.power)
+    if (!light[0].power)
         return make_rgb(0, 0, 0);
 
     /* Convert the current light configuration from HSV to RGB and return it. As
      * the hsl2rgb function awaits saturation and value to be percentages, these
      * will be converted before passing them as arguments. */
-    return hsv2rgb(light.hue, light.saturation / 100.0, light.value / 100.0);
+    return hsv2rgb(light[0].hue, light[0].saturation / 100.0,
+                   light[0].value / 100.0);
 }
+
+
+#else /* LED_RGB */
+
+/**
+ * Get the PWM channel levels for the current configuration of connected lights.
+ *
+ * In monochrome mode, the internal configuration of the LED controller can
+ * handle up tp three indivudal light stips connected to the outputs R, G and B.
+ * However, most of the controller's firmware code handles those channels
+ * together as one. This function combines the three individual lights as a
+ * single one and calculates the next desired state of all PWM outputs.
+ *
+ * @note This is the monochrome implementation of this function.
+ *
+ *
+ * @return The current light configuration from @ref light converted to RGB.
+ */
+rgb
+light_rgb()
+{
+    /* As no actual colors need to be calculated, simply return the three
+     * individual channels as fake-colors. If a specific light is not powered
+     * on, its value will be set to zero to disable the PWM output. */
+    return make_rgb(light[0].power ? (light[0].value / 100.0) : 0,
+                    light[1].power ? (light[1].value / 100.0) : 0,
+                    light[2].power ? (light[2].value / 100.0) : 0);
+}
+
+#endif /* LED_RGB */

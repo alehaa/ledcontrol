@@ -29,6 +29,7 @@
 
 #cmakedefine LED_BAUD_RATE @LED_BAUD_RATE@
 #cmakedefine LED_FADE_TIME @LED_FADE_TIME@
+#cmakedefine LED_RGB
 
 
 #endif

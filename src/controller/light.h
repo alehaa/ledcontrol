@@ -24,6 +24,23 @@
 
 #include <stdint.h>
 
+#include "config.h"
+
+
+/**
+ * Number of different channel configurations the controller can handle.
+ *
+ * For RGB LED lights, the controller needs to controll three PWM channels for
+ * the individual colors, while all channels can be controlled indivudally in
+ * monochrome mode. This macro sets the number of channels depending on the LED
+ * controller mode.
+ */
+#ifdef LED_RGB
+#define LED_CHANNELS 1
+#else
+#define LED_CHANNELS 3
+#endif
+
 
 /**
  * State configuration for the light.
@@ -37,7 +54,7 @@ typedef struct
 {
     int power; /**< The light's power status. */
     int value; /**< The light's brightness. */
-#if 1
+#ifdef LED_RGB
     int hue;        /**< The light's hue. */
     int saturation; /**< The light's saturation. */
 #endif
@@ -57,7 +74,7 @@ typedef struct rgb
 } rgb;
 
 
-extern light_status light;
+extern light_status light[LED_CHANNELS];
 
 
 rgb light_rgb();

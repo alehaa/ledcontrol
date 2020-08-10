@@ -33,7 +33,11 @@ const serialio = require('serial-io');
 
 /* Register the module and associate the accessory type name with the related
  * class, which will parse its configuration and handle its requests from
- * homebridge and homekit. */
+ * homebridge and homekit.
+ *
+ * NOTE: Despite the LED controller comes in two modes (RGB and monochrome),
+ *       just a single class will be used to handle both of them, as this
+ *       simplifies the source code of this plugin. */
 module.exports = (api) => {
     api.registerAccessory('ArduinoLED', ArduinoLED);
 };
@@ -100,7 +104,11 @@ class ArduinoLED
             'val' : characteristic.Brightness
         };
 
-        if (true) {
+        /* Only RGB LED strips will have hue and saturation characteristics,
+         * which can be checked by the 'channel' configuration option: RGB
+         * lights require all three channels for color output, so no individual
+         * channel can be selected. */
+        if (!('channel' in this.config)) {
             tmp.hue = characteristic.Hue;
             tmp.sat = characteristic.Saturation;
         }
@@ -140,6 +148,23 @@ class ArduinoLED
 
 
     /**
+     * Get the channel prefix for sending a command.
+     *
+     * If the configuration for this light should control a monochrome light
+     * connected to a specific channel of the controller, this function will
+     * return the required channel prefix for communication.
+     *
+     *
+     * @return The channel prefix for monochrome lights or an empty string for
+     *         RGB LED strips.
+     */
+    getChannel()
+    {
+        return ('channel' in this.config) ? this.config.channel + ' ' : '';
+    }
+
+
+    /**
      * Send the commands from the command queue.
      *
      * This method runs in the background to communicate with the LED controller
@@ -154,7 +179,7 @@ class ArduinoLED
          * care on handling the low-level communication via UART. */
         this.queue.forEach((cmd, index) => {
             serialio
-                .send(this.config.adapter, cmd + '\n',
+                .send(this.config.adapter, this.getChannel() + cmd + '\n',
                       {baudRate : this.config.baudrate || 9600})
 
                 /* After sucessfully receiveing a response via UART, forward the

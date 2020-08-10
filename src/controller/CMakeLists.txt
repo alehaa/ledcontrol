@@ -28,6 +28,11 @@ set(LED_BAUD_RATE 9600 CACHE STRING "Baud rate for controller UART")
 # of seconds. However, see the notes on FADE_WAIT before increasing.
 set(LED_FADE_TIME 3 CACHE STRING "Time the light should fade to the new color")
 
+# By default, the LED controller will control RGB LED stips. However, this
+# behaviour can be disabled, to control the channels as individual lights, i.e.
+# for connecting multiple monochrome LED strips to a single LED controller.
+set(LED_RGB ON CACHE BOOL "Enable the RGB mode of the controller")
+
 # Generate a configuration file, which can be included and used by all source
 # code files of the controller's firmware.
 configure_file("config.h.in" "config.h")

@@ -26,6 +26,7 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
+#include "config.h"
 #include "fade.h"
 #include "light.h"
 #include "pwm.h"
@@ -56,7 +57,12 @@ fade_light(bool set)
      * color and the one to fade to in the internal variables and reset the
      * counter to its maximum. If there's an ongoing fade cycle, this operation
      * will abort the running one and copy its current state, so it will be
-     * continued in the fade cycle now starting. */
+     * continued in the fade cycle now starting.
+     *
+     * NOTE: To simplify the code, even in monochrome mode, all three channels
+     *       will be handled together. A new fading cycle may abort a running
+     *       one for another individual light, i.e. its fading gradient will be
+     *       slower and end with the new one simultaniously. */
     if (set) {
         prev = pwm_get_rgb();
         next = light_rgb();
@@ -186,6 +192,30 @@ parse_command()
         return;
 
 
+    /* Get the related light configuration to be altered in this command. For
+     * RGB LED strips this is the first and only configuration, but for
+     * monochrome ones a channel prefix in the command will be used to determine
+     * which of the channels to select. */
+    light_status *conf = &light[0];
+#ifndef LED_RGB
+    switch (buffer[0]) {
+        case 'r': break; /* Already set above. */
+        case 'g': conf = &light[1]; break;
+        case 'b': conf = &light[2]; break;
+
+        /* If none of the channels defined above matched, send an error message
+         * and stop further processing for this command. */
+        default: uart_send("error: unknown output channel\n"); return;
+    }
+
+    /* For monochrome lights, shift the buffer to ignore the channel selector.
+     * This allows reusing the command parser defined below for monochrome
+     * lights, as the commands are the same. */
+    for (char *p = buffer; *p; p++)
+        *p = *(p + 2);
+#endif
+
+
     /****************
      * parse commands
      ****************/
@@ -194,18 +224,18 @@ parse_command()
      * parameter, an integer will be used, so the same code as for the other
      * parameters can be reused not just by the LED controller's firmware, but
      * also the related homebridge plugin or any other third-party code. */
-    if (parse_command_int(buffer, "pwr", "?pwr", 1, &(light.power)))
+    if (parse_command_int(buffer, "pwr", "?pwr", 1, &(conf->power)))
         noop();
 
     /* Parse additional commands for hue, saturation and luminance with integer
      * parameters. Each of them will have an allowed range from 0 to 100, except
      * for hue, which has a limit of 360. */
-    else if (parse_command_int(buffer, "val", "?val", 100, &(light.value)))
+    else if (parse_command_int(buffer, "val", "?val", 100, &(conf->value)))
         noop();
-#if 1
-    else if (parse_command_int(buffer, "hue", "?hue", 360, &(light.hue)))
+#ifdef LED_RGB
+    else if (parse_command_int(buffer, "hue", "?hue", 360, &(conf->hue)))
         noop();
-    else if (parse_command_int(buffer, "sat", "?sat", 100, &(light.saturation)))
+    else if (parse_command_int(buffer, "sat", "?sat", 100, &(conf->saturation)))
         noop();
 #endif
 
