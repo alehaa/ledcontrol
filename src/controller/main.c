@@ -211,7 +211,8 @@ parse_command()
     /* For monochrome lights, shift the buffer to ignore the channel selector.
      * This allows reusing the command parser defined below for monochrome
      * lights, as the commands are the same. */
-    for (char *p = buffer; *p; p++)
+    char *p;
+    for (p = buffer; *p; p++)
         *p = *(p + 2);
 #endif
 
