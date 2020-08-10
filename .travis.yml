@@ -29,6 +29,14 @@ matrix:
       sudo: required
       compiler: avr-gcc
 
+    - os: linux
+      compiler: avr-gcc
+      sudo: false
+      before_script:
+        - export CMAKE_EXTRA_FLAGS="-DLED_RGB=off"
+      env:
+        - MONOCHROME
+
 addons:
   apt:
     packages:
@@ -38,4 +46,5 @@ addons:
 script:
   - mkdir build && cd build
   - cmake .. -DCMAKE_TOOLCHAIN_FILE=../externals/CMake-avr/generic-gcc-avr.cmake
+      ${CMAKE_EXTRA_FLAGS}
     && make
