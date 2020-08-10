@@ -26,7 +26,7 @@ set(LED_BAUD_RATE 9600 CACHE STRING "Baud rate for controller UART")
 # should result in a smooth transition between very dark and light colors, but
 # may be too long for slight changes in colors. It can be altered to any number
 # of seconds. However, see the notes on FADE_WAIT before increasing.
-set(LED_FADE_TIME 3 CACHE STRING "")
+set(LED_FADE_TIME 3 CACHE STRING "Time the light should fade to the new color")
 
 # Generate a configuration file, which can be included and used by all source
 # code files of the controller's firmware.
