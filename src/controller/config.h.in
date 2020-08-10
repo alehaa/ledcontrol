@@ -23,5 +23,12 @@
  * which are used by the LED controller's firmware.
  */
 
+#ifndef LEDCONTROL_CONFIG_H
+#define LEDCONTROL_CONFIG_H
+
+
 #cmakedefine LED_BAUD_RATE @LED_BAUD_RATE@
 #cmakedefine LED_FADE_TIME @LED_FADE_TIME@
+
+
+#endif
