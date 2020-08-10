@@ -35,10 +35,12 @@
  */
 typedef struct
 {
-    int power;      /**< The light's power status. */
+    int power; /**< The light's power status. */
+    int value; /**< The light's brightness. */
+#if 1
     int hue;        /**< The light's hue. */
     int saturation; /**< The light's saturation. */
-    int value;      /**< The light's brightness. */
+#endif
 } light_status;
 
 

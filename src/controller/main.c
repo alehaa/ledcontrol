@@ -200,12 +200,14 @@ parse_command()
     /* Parse additional commands for hue, saturation and luminance with integer
      * parameters. Each of them will have an allowed range from 0 to 100, except
      * for hue, which has a limit of 360. */
+    else if (parse_command_int(buffer, "val", "?val", 100, &(light.value)))
+        noop();
+#if 1
     else if (parse_command_int(buffer, "hue", "?hue", 360, &(light.hue)))
         noop();
     else if (parse_command_int(buffer, "sat", "?sat", 100, &(light.saturation)))
         noop();
-    else if (parse_command_int(buffer, "val", "?val", 100, &(light.value)))
-        noop();
+#endif
 
 
     /* If the parsed command was a setter command, initiate a new fading cycle
