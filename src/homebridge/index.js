@@ -283,6 +283,7 @@ class ArduinoLED
             value = value ? 1 : 0;
 
         this.queue.push(command + ' ' + value);
+        this.cache[command] = value;
 
         /* NOTE: This callback needs always to be called, even if no data is
          *       returned. Otheriwse apple devices will asume the device is not
