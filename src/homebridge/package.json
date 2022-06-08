@@ -1,6 +1,6 @@
 {
     "name": "homebridge-arduino-led",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "Homebridge plugin for ArduinoLED controllers",
     "license": "GPL-3.0-or-later",
     "keywords": [

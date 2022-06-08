@@ -195,7 +195,10 @@ class ArduinoLED
                 /* If an error occured, forward the error message to homebridge.
                  * In this case the command will not be removed from the queue,
                  * so it can be repeated by the next call of this method. */
-                .catch(error => this.log.error(error));
+                .catch(error => {
+                    if (error.message.indexOf('Cannot lock port') < 0)
+                        this.log.error(error.message)
+                });
         });
     }
 
